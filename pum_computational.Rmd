@@ -1,0 +1,175 @@
+---
+title: "pum_computational"
+author: "Jose Martinez"
+date: "2024-07-25"
+output: html_document
+---
+
+
+# Load libraries
+```{r message=F, warning=F,echo=F}
+library(tximport)
+library(AnnotationDbi)
+library(org.Mm.eg.db)
+library(limma)
+library(edgeR)
+library(pheatmap)
+library(ggplot2)
+library(clusterProfiler)
+library(dplyr)
+library(tidyr)
+```
+
+# Load Rdata
+```{r message=F, warning=F,echo=F}
+load("selected_pum_computational.RData")
+```
+
+# Figure 4C
+```{r}
+p <- dotplot(Pum1_GO, showCategory=5) + 
+  theme(
+    text = element_text(family = "Arial"),  # Set global text to Arial
+    axis.title = element_text(family = "Arial", size = 16),  # Set axis titles to Arial and size 14
+    axis.text = element_text(family = "Arial", size = 12),  # Set axis text to Arial and size 12
+    axis.text.y = element_text(family = "Arial", size = 16)  # Set y-axis text (GO terms) to Arial and size 16
+  )
+
+print(p)
+```
+```{r}
+p <- dotplot(Pum2_GO, showCategory=5) + 
+  theme(
+    text = element_text(family = "Arial"),  # Set global text to Arial
+    axis.title = element_text(family = "Arial", size = 16),  # Set axis titles to Arial and size 14
+    axis.text = element_text(family = "Arial", size = 12),  # Set axis text to Arial and size 12
+    axis.text.y = element_text(family = "Arial", size = 16)  # Set y-axis text (GO terms) to Arial and size 16
+  )
+
+print(p)
+```
+```{r}
+p <- dotplot(Pum_GO, showCategory=5) + 
+  theme(
+    text = element_text(family = "Arial"),  # Set global text to Arial
+    axis.title = element_text(family = "Arial", size = 16),  # Set axis titles to Arial and size 14
+    axis.text = element_text(family = "Arial", size = 12),  # Set axis text to Arial and size 12
+    axis.text.y = element_text(family = "Arial", size = 16)  # Set y-axis text (GO terms) to Arial and size 16
+  )
+
+print(p)
+```
+# Figure 4E
+```{r}
+p <- dotplot(gsea, showCategory = categories, split=".sign") + 
+  facet_grid(. ~ .sign, scales = "free_x", space = "free_x") +  # Allow free space adjustment
+  scale_x_continuous(breaks = seq(0.35, 0.6, by = 0.05), 
+                     limits = c(0.35, 0.6)) +  # Adjust according to your specific data ranges
+  theme(
+    text = element_text(family = "Arial"),  # Set global text to Arial
+    axis.title = element_text(family = "Arial", size = 16),  # Set axis titles to Arial and size 16
+    axis.text = element_text(family = "Arial", size = 12),  # Set axis text to Arial and size 12
+    axis.text.y = element_text(family = "Arial", size = 16),  # Set y-axis text (GO terms) to Arial and size 16
+    strip.text = element_text(family = "Arial", size = 20),  # Set facet title text to Arial and size 20
+    panel.spacing = unit(1, "lines")) # Increase spacing between panels
+  
+print(p)
+```
+# Figure S1A
+```{r}
+heatmap_plot <- pheatmap(data, 
+                         clustering_distance_rows = "euclidean", 
+                         clustering_distance_cols = "euclidean",
+                         clustering_method = "complete", 
+                         color = colorRampPalette(c("blue", "white", "red"))(255),
+                         scale = "row",
+                         show_rownames = FALSE,
+                         show_colnames = TRUE,
+                         fontsize_row = 10,
+                         fontsize_col = 12,
+                         border_color = NA)
+
+print(heatmap_plot)
+```
+
+# Figure S4A
+```{r}
+df <- res_P1KO
+df$color = "grey"
+df$color[df$adj.P.Val < 0.05 & df$logFC > 1] = "blue"
+df$color[df$adj.P.Val < 0.05 & df$logFC < -1] = "red"
+count_red <- sum(df$color == "red")
+count_blue <- sum(df$color == "blue")
+
+p <- ggplot(df, aes(x=logFC, y=-log10(adj.P.Val), color=color)) + 
+  geom_point(size=0.5) + 
+  scale_color_manual(values=c("grey"="grey", "blue"="blue", "red"="red")) +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed") +
+  geom_vline(xintercept = c(-1, 1), linetype = "dashed") +
+  coord_cartesian(xlim = c(-5, 5), ylim = c(0, 7)) + 
+  labs(title = "Pum1 KO", x="log2 Fold Change", y="-log10 padj") +
+  theme_classic() +
+  theme(aspect.ratio = 1/1) +
+  theme(axis.text = element_text(size=14, color="black"), 
+        axis.title = element_text(size=14, color="black"),
+        legend.position = "none") +
+  annotate("text", x = -1.5, y = 7, size=5, label = paste("Down:", count_red), color="red", hjust=1) +
+  annotate("text", x = 1.5, y = 7, size=5, label = paste("Up:", count_blue), color="blue", hjust=0)
+
+print(p)
+```
+
+```{r}
+df <- res_P2KO
+df$color = "grey"
+df$color[df$adj.P.Val < 0.05 & df$logFC > 1] = "blue"
+df$color[df$adj.P.Val < 0.05 & df$logFC < -1] = "red"
+count_red <- sum(df$color == "red")
+count_blue <- sum(df$color == "blue")
+
+p <- ggplot(df, aes(x=logFC, y=-log10(adj.P.Val), color=color)) + 
+  geom_point(size=0.5) + 
+  scale_color_manual(values=c("grey"="grey", "blue"="blue", "red"="red")) +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed") +
+  geom_vline(xintercept = c(-1, 1), linetype = "dashed") +
+  coord_cartesian(xlim = c(-5, 5), ylim = c(0, 7)) + 
+  labs(title = "Pum2 KO", x="log2 Fold Change", y="-log10 padj") +
+  theme_classic() +
+  theme(aspect.ratio = 1/1) +
+  theme(axis.text = element_text(size=14, color="black"), 
+        axis.title = element_text(size=14, color="black"),
+        legend.position = "none") +
+  annotate("text", x = -1.5, y = 7, size=5, label = paste("Down:", count_red), color="red", hjust=1) +
+  annotate("text", x = 1.5, y = 7, size=5, label = paste("Up:", count_blue), color="blue", hjust=0)
+
+print(p)
+```
+
+```{r}
+df <- res_DCKO
+df$color = "grey"
+df$color[df$adj.P.Val < 0.05 & df$logFC > 1] = "blue"
+df$color[df$adj.P.Val < 0.05 & df$logFC < -1] = "red"
+count_red <- sum(df$color == "red")
+count_blue <- sum(df$color == "blue")
+
+p <- ggplot(df, aes(x=logFC, y=-log10(adj.P.Val), color=color)) + 
+  geom_point(size=0.5) + 
+  scale_color_manual(values=c("grey"="grey", "blue"="blue", "red"="red")) +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed") +
+  geom_vline(xintercept = c(-1, 1), linetype = "dashed") +
+  coord_cartesian(xlim = c(-5, 5), ylim = c(0, 7)) + 
+  labs(title = "Pum1/2 dCKO", x="log2 Fold Change", y="-log10 padj") +
+  theme_classic() +
+  theme(aspect.ratio = 1/1) +
+  theme(axis.text = element_text(size=14, color="black"), 
+        axis.title = element_text(size=14, color="black"),
+        legend.position = "none") +
+  annotate("text", x = -1.5, y = 7, size=5, label = paste("Down:", count_red), color="red", hjust=1) +
+  annotate("text", x = 1.5, y = 7, size=5, label = paste("Up:", count_blue), color="blue", hjust=0)
+
+print(p)
+```
